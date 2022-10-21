@@ -5,8 +5,10 @@ Code for a 2022 halloween costume!
 ## Parts needed:
 - Arduino Nano Every. [Link](https://www.amazon.se/-/en/gp/product/B07VX7MX27/ref=ppx_yo_dt_b_asin_title_o04_s00?ie=UTF8&psc=1).
 - WS2812b LED strip. [Link](https://www.amazon.se/-/en/gp/product/B08T89S7C3/ref=ppx_yo_dt_b_asin_title_o04_s01?ie=UTF8&psc=1).
-- Some stuff to make it into a cube that can be worn: Cardboard, conduit, wires, duct tape, electric tape, velcro, etc...
 - A button and a 10k resistor
+- A 5V battery or power supply. 
+- Micro USB cable.
+- Some stuff to make it into a cube that can be worn: cardboard, translucent plastic panels, conduit, wires, duct tape, electric tape, velcro, paper, glue, etc...
 
 ## Dependencies:
 - FastLED library (can be downladed using Arduino IDE)
