@@ -1,10 +1,8 @@
-// (c) Michael Schoeffler 2017, http://www.mschoeffler.de
+// Authors: Tamim Haroun, Zaid Haroun
 #include "FastLED.h"
 
 #define DATA_PIN 3 // set the data pin on the arduino
-
 #define BUTTON_PIN 4
-#define LED_PIN 13
 
 #define LED_TYPE WS2812B
 #define COLOR_ORDER GRB
@@ -100,8 +98,6 @@ void setup()
   */
   Serial.print("\nStarting up! \n");
 
-  // initialize the LED pin as an output:
-  pinMode(LED_PIN, OUTPUT);
   // initialize the pushbutton pin as an input:
   pinMode(BUTTON_PIN, INPUT);
 
@@ -202,21 +198,6 @@ void showRubiksShuffled(int choice, long delayTime = 100)
   FastLED.show();
   delay(delayTime);
 }
-
-/*
-// Loops between all the different shuffles and then shows a random shuffle at the end
-void shuffleCube(long shuffleTime=500, long delayTime=5000)
-{
-   //loop between all the shuffles
-   for (int choice = 0; choice < NUMSHUFFLES; choice++)
-     {
-      // show shuffle i for shuffleTime ms
-      showRubiksShuffled(choice, shuffleTime);
-     }
-     // show a random shuffle for delayTime ms
-     showRubiksShuffled(random8(), delayTime);
-}
-*/
 
 // Loop over all sides and squares and set the square colours according to the SquareColours array
 void testSquares(long delayTime = 500)
@@ -335,29 +316,9 @@ void loop()
     }
     break;
   default:
-    //showProgramRandom(10,200);
+    showProgramRandom(10,200);
     Serial.print("Oops! Cube state does not exist!");
     break;
   }
 
 }
-
-/*
-// test program
-void testloop() {
-
- // Remove the delays in each function
-  // As long as the state is not changing, continue in the current state
-  // showShuffled and showSolved are only shown at state changes
-  // New function is needed to keep shuffling every X cycles (or Y ms)
-
-  testSquares();
-
-  showProgramCleanUp(500); // turn off all LEDs
-
-  showRubiksSolved(5000); // show a solved cube
-
-  //showProgramRandom(10,3000);
-
-}
-*/
