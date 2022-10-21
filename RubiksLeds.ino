@@ -1,5 +1,10 @@
-// Authors: Tamim Haroun, Zaid Haroun
-#include "FastLED.h"
+/**
+ * @file RubiksLeds.ino
+ * @author Tamim Haroun
+ * @brief Rubiks cube costume project, 2022
+  */
+
+#include "FastLED.h"    // Helper library for controlling the LEDs
 
 #define DATA_PIN 3    // set the data pin on the arduino
 #define BUTTON_PIN 4  // set the pushbutton pin on the arduino. 
@@ -86,6 +91,18 @@ const sColours Shuffle[NUMSHUFFLES][NUM_SQUARES] = {
      WHITE, ORANGE, GREEN, BLUE, RED, WHITE, RED, RED, ORANGE,
      WHITE, BLUE, BLUE, GREEN, BLUE, GREEN, GREEN, YELLOW, BLUE,
      RED, WHITE, RED, ORANGE, ORANGE, YELLOW, ORANGE, YELLOW, WHITE}};
+
+// function declarations
+void showProgramCleanUp(long delayTime);
+void showProgramRandom(int numIterations, long delayTime);
+void setSquareLeds(int SideNum, int SquareNum, CRGB Colour, int NumLedsPerSquare);
+void showRubiksSolved(long delayTime);
+void showRubiksShuffled(int choice, long delayTime);
+void getButtonState();
+bool buttonPressed();
+bool buttonReleased();
+void getCubestate();
+bool cubeStateChanged();
 
 /// @brief This function is called before the loop to initialize the system
 void setup()
