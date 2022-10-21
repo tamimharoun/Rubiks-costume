@@ -27,7 +27,7 @@ const CRGB sColour[7] = {CRGB::White, CRGB::Green, CRGB::Red, CRGB::Blue, CRGB::
 #define SQUARES_PER_SIDE 9                       // number of squares per side
 #define NUM_SQUARES NUM_SIDES *SQUARES_PER_SIDE  // number of squares on the rubiks cube, NUM_SIDES x SQUARES_PER_SIDE
 #define NUMSHUFFLES 5                            // Number of shuffles stored in the Shuffle array
-#define NUMCUBESTATES 4                          // Number of sube states
+#define NUMCUBESTATES 5                          // Number of cube states, including idle state
 #define CYCLE_DELAY_TIME 50                      // Delay time between each loop in the main program
 
 // Global variables
@@ -93,11 +93,12 @@ const sColours Shuffle[NUMSHUFFLES][NUM_SQUARES] = {
      RED, WHITE, RED, ORANGE, ORANGE, YELLOW, ORANGE, YELLOW, WHITE}};
 
 // function declarations
+
 void showProgramCleanUp(long delayTime);
 void showProgramRandom(int numIterations, long delayTime);
-void setSquareLeds(int SideNum, int SquareNum, CRGB Colour, int NumLedsPerSquare);
 void showRubiksSolved(long delayTime);
 void showRubiksShuffled(int choice, long delayTime);
+void setSquareLeds(int SideNum, int SquareNum, CRGB Colour, int NumLedsPerSquare);
 void getButtonState();
 bool buttonPressed();
 bool buttonReleased();
@@ -265,7 +266,7 @@ void getCubestate()
     cubeState++; // go to the next cube state if the button is pressed
     if (cubeState >= NUMCUBESTATES) 
     {
-      cubeState = 0;  // go back to the first state when the max number of states is reached
+      cubeState = 1;  // go back to the first state when the max number of states is reached
     }
   }
 
@@ -282,7 +283,7 @@ void getCubestate()
   // Check if the cube has been idle for 1000 cycles
   if (idleLoopCount == 1000) // 1000 cycles is 1000 * (CYCLE_DELAY_TIME + execution time) = ~60 seconds
   {
-    cubeState = 5; // go to sleeping state when idle
+    cubeState = 0; // go to sleeping state when idle
   }
 }
 
@@ -301,15 +302,22 @@ void loop()
   getCubestate();
   switch (cubeState)
   {
-  case 0: // SHUFFLED
+    case 0: // SLEEP
+    if (cubeStateChanged())
+    {
+      showProgramCleanUp(50);
+      Serial.print("Shutting off LEDs.\n");
+    }
+    break;
+  case 1: // SHUFFLED
     if (cubeStateChanged())
     {
       Serial.print("\nSHUFFLED!\n"); // Go to the shuffled state
       showRubiksShuffled(random8(), 50);
     }
     break;
-  case 1: // SHUFFLING
-  case 3: // SHUFFLING
+  case 2: // SHUFFLING
+  case 4: // SHUFFLING
     if (cubeStateChanged())
     {
       Serial.print("SHUFFLING."); // continue shuffling
@@ -317,18 +325,11 @@ void loop()
     Serial.print("."); // continue shuffling
     showRubiksShuffled(random8(), 100);
     break;
-  case 2: // SOLVED
+  case 3: // SOLVED
     if (cubeStateChanged())
     {
       Serial.print("\nSOLVED!\n"); // Go to the solved state
       showRubiksSolved(50);
-    }
-    break;
-  case 5: // SLEEP
-    if (cubeStateChanged())
-    {
-      showProgramCleanUp(50);
-      Serial.print("Shutting off LEDs.\n");
     }
     break;
   default:
