@@ -1,18 +1,19 @@
 // Authors: Tamim Haroun, Zaid Haroun
 #include "FastLED.h"
 
-#define DATA_PIN 3 // set the data pin on the arduino
-#define BUTTON_PIN 4
+#define DATA_PIN 3    // set the data pin on the arduino
+#define BUTTON_PIN 4  // set the pushbutton pin on the arduino. 
+                      // Connect one lead of the pushbutton and a 10k resistor to ground from this pin. 
+                      // The other lead of the pushbutton should be connected to 5V.
 
-#define LED_TYPE WS2812B
-#define COLOR_ORDER GRB
-#define BRIGHTNESS 100     // Brightness value between 0 and 255
-#define LOW_BRIGHTNESS 25 // Brightness value between 0 and 255
+#define LED_TYPE WS2812B    // set up the type of LED
+#define COLOR_ORDER GRB     // set up the colour order
+#define BRIGHTNESS 100      // Choose a brightness value between 0 and 255
 
-#define NUM_LEDS 135 // 3 LEDS per square. 27 LEDs per side. 5 sides.
-CRGB leds[NUM_LEDS]; // initialize an array of leds
+#define NUM_LEDS 135      // 3 LEDS per square. 27 LEDs per side. 5 sides.
+CRGB leds[NUM_LEDS];      // initialize an array of leds
 
-enum Sides    {TOP,  FRONT,  RIGHT,  BACK,  LEFT,  BOTTOM}; // enum of side names
+enum Sides    {TOP,  FRONT,  RIGHT,  BACK,  LEFT,  BOTTOM};           // enum of side names. Added for guidance only, to indicate what colour each side is.
 enum sColours {WHITE,  GREEN,  RED,  BLUE,  ORANGE,  YELLOW,  BLACK}; // enum of side colours
 
 const CRGB sColour[7] = {CRGB::White, CRGB::Green, CRGB::Red, CRGB::Blue, CRGB::DarkOrange, CRGB::Yellow, CRGB::Black}; // array to store the side colours to be assigned to the leds
@@ -21,17 +22,20 @@ const CRGB sColour[7] = {CRGB::White, CRGB::Green, CRGB::Red, CRGB::Blue, CRGB::
 #define SQUARES_PER_SIDE 9                       // number of squares per side
 #define NUM_SQUARES NUM_SIDES *SQUARES_PER_SIDE  // number of squares on the rubiks cube, NUM_SIDES x SQUARES_PER_SIDE
 #define NUMSHUFFLES 5                            // Number of shuffles stored in the Shuffle array
-#define NUMCUBESTATES 4
+#define NUMCUBESTATES 4                          // Number of sube states
+#define CYCLE_DELAY_TIME 50                      // Delay time between each loop in the main program
 
 // Global variables
 CRGB SquareColours[NUM_SQUARES] = {CRGB::Black}; // array to hold the colour of each square. initialized to all black.
-unsigned int lastButtonState = 0;
-unsigned int buttonState = 0; // variable for reading the pushbutton status
-unsigned int cubeState = 0;
-unsigned int lastCubeState = 0;
-unsigned int shuffleCount = 0;
-unsigned int idleLoopCount = 0;
 
+unsigned int buttonState = 0;       // pushbutton state
+unsigned int lastButtonState = 0;   // previous pushbutton state
+unsigned int cubeState = 0;         // cube state
+unsigned int lastCubeState = 0;     // previous cube state
+unsigned int idleLoopCount = 0;     // idle loop counter
+
+// Mapping between side and square to Led number. 
+// -1 is a special value which means no LEDs there.
 const int SquareToLed[NUM_SIDES][SQUARES_PER_SIDE] = {
     //  1 ,  2 ,  3 ,  4 ,  5 ,  6 ,  7 ,  8 ,  9     // Square number
     {112, 115, 118, 0, -1, 3, 6, 9, 12},     // TOP
@@ -45,11 +49,11 @@ const int SquareToLed[NUM_SIDES][SQUARES_PER_SIDE] = {
  * 1 2 3 *
  * 4 5 6 *
  * 7 8 9 *
-   FRONT   |   RIGHT  |    BACK   |   LEFT   |  TOP   |
- 46 49 52  | 109 xx 15 | 76 79 82  | 55 x  73 | 112 115 118  |
- 43 40 37  | 106 xx 18 | 91 88 85  | 58 x  70 | 0 x 3  |
- 28 31 34  | 103 24 21 | 94 97 100 | 61 64 67 | 6 9 12 |
-******************************************/
+   FRONT   |   RIGHT   |    BACK   |   LEFT   |      TOP    |
+ 46 49 52  | 109 xx 15 | 76 79 82  | 55 x  73 | 112 115 118 |
+ 43 40 37  | 106 xx 18 | 91 88 85  | 58 x  70 |   0  x   3  |
+ 28 31 34  | 103 24 21 | 94 97 100 | 61 64 67 |   6  9   12 |
+**************************************************************/
 
 // Two dimensional array that stores the colours for each shuffle.
 const sColours Shuffle[NUMSHUFFLES][NUM_SQUARES] = {
@@ -83,7 +87,7 @@ const sColours Shuffle[NUMSHUFFLES][NUM_SQUARES] = {
      WHITE, BLUE, BLUE, GREEN, BLUE, GREEN, GREEN, YELLOW, BLUE,
      RED, WHITE, RED, ORANGE, ORANGE, YELLOW, ORANGE, YELLOW, WHITE}};
 
-// This function is called before the loop to initialize the system
+/// @brief This function is called before the loop to initialize the system
 void setup()
 {
 
@@ -108,8 +112,9 @@ void setup()
   showProgramCleanUp(1000); // turn off all LEDs
 }
 
-// Switches off all LEDs
-void showProgramCleanUp(long delayTime)
+/// @brief Switches off all LEDs
+/// @param delayTime Specifies how long to wait after sending the command to the LEDs
+void showProgramCleanUp(long delayTime=50)
 {
   for (int i = 0; i < NUM_LEDS; i++)
   {
@@ -119,10 +124,10 @@ void showProgramCleanUp(long delayTime)
   delay(delayTime);
 }
 
-// switches on all LEDs. Each LED is shown in random color.
-// numIterations: indicates how often LEDs are switched on in random colors
-// delayTime: indicates for how long LEDs are switched on.
-void showProgramRandom(int numIterations, long delayTime)
+/// @brief Switches on all LEDs with random colors
+/// @param numIterations How many times to perform this operation
+/// @param delayTime How long to wait after sending the command to the LEDs
+void showProgramRandom(int numIterations=10, long delayTime=50)
 {
   for (int iteration = 0; iteration < numIterations; ++iteration)
   {
@@ -135,10 +140,14 @@ void showProgramRandom(int numIterations, long delayTime)
   }
 }
 
-// Sets the LED at SideNum and LedNum to the colour specified. 3 Leds per square by default.
+/// @brief Sets the LED at SideNum and LedNum to the colour specified. 3 Leds per square by default.
+/// @param SideNum Side number (see Sides Enum)
+/// @param SquareNum Square number; left to right, top to bottom.
+/// @param Colour Colour of the square
+/// @param NumLedsPerSquare Number of LEDs to light up per square
 void setSquareLeds(int SideNum, int SquareNum, CRGB Colour, int NumLedsPerSquare = 3)
 {
-  // Convert side and square number to led number using array look-up
+  // Convert side and square number to led number using look-up table
   int StartLed = SquareToLed[SideNum][SquareNum];
 
   if (StartLed < 0)
@@ -155,7 +164,8 @@ void setSquareLeds(int SideNum, int SquareNum, CRGB Colour, int NumLedsPerSquare
   }
 }
 
-// Shows a solved rubiks cube
+/// @brief Shows a solved cube. Side colours specified in enum sColours.
+/// @param delayTime How long to wait after sending the command to the LEDs
 void showRubiksSolved(long delayTime = 100)
 {
   int Side, Square;
@@ -173,7 +183,9 @@ void showRubiksSolved(long delayTime = 100)
   delay(delayTime);
 }
 
-// Loop over all sides and squares and set the square colours according to the SquareColours array
+/// @brief Shows a shuffled cube. Sets the square colours according to the SquareColours array
+/// @param choice which pre-defined shuffle to choose
+/// @param delayTime How long to wait after sending the command to the LEDs
 void showRubiksShuffled(int choice, long delayTime = 100)
 {
   int Side, Square, i;
@@ -199,89 +211,76 @@ void showRubiksShuffled(int choice, long delayTime = 100)
   delay(delayTime);
 }
 
-// Loop over all sides and squares and set the square colours according to the SquareColours array
-void testSquares(long delayTime = 500)
-{
-  showProgramCleanUp(500); // turn off all LEDs
-
-  int Side, Square, i;
-  // set the square leds on each side according to the chosen colour of each square
-  for (Side = 0; Side < NUM_SIDES; Side++)
-  {
-    for (Square = 0; Square < SQUARES_PER_SIDE; Square++)
-    {
-      i = (Side * SQUARES_PER_SIDE) + Square; // index of square
-      setSquareLeds(Side, Square, sColour[Side]);
-      FastLED.show();
-      delay(delayTime);
-    }
-  }
-}
-
-// Saves the state of the button and checks which state the button is in now
+/// @brief Saves the state of the button and checks which state the button is in now
 void getButtonState()
 {
-  lastButtonState = buttonState;
-  // read the state of the pushbutton value:
-  buttonState = digitalRead(BUTTON_PIN);
-  delay(10); // extra delay just in case, to make sure that we dont read the button state too often
+  lastButtonState = buttonState;            // save the state of the button
+  buttonState = digitalRead(BUTTON_PIN);    // read the current state of the pushbutton
+  delay(5);   // extra delay, just in case
 }
 
-// returns true if the button was pressed
+/// @brief Checks if the button was pressed
+/// @return returns true if the button was pressed
 bool buttonPressed()
 {
-  // check if the pushbutton is pressed.
   return (buttonState == HIGH && lastButtonState == LOW);
 }
 
 // returns true if the button was pressed
+
+/// @brief Checks if the button was released
+/// @return returns true if the button was released
 bool buttonReleased()
 {
-  // check if the pushbutton is pressed.
   return (buttonState == LOW && lastButtonState == HIGH);
 }
 
-// saves the last cube state and checks which state the cube should be in now
-// 0:SHUFFLED, 1:SHUFFLING, 2:SOLVED, 3:SHUFFLING, 4: ----, 5: SLEEPING
+/// @brief Saves the last cube state and checks which state the cube should be in now
+///        0:SHUFFLED, 1:SHUFFLING, 2:SOLVED, 3:SHUFFLING, 4: N/A , 5: SLEEP
+///
 void getCubestate()
 {
-  lastCubeState = cubeState;
-  getButtonState(); // get the button state
+  lastCubeState = cubeState;  // save the state of the cube
+  getButtonState();           // get the button state
   
   if (buttonPressed())
   {
-    cubeState++; // go to the next state if the button is pressed
+    cubeState++; // go to the next cube state if the button is pressed
     if (cubeState >= NUMCUBESTATES) 
     {
       cubeState = 0;  // go back to the first state when the max number of states is reached
     }
   }
 
-  // count how many times the cube stayed in the same state
+  // Keep track of idle time
   if (cubeState == lastCubeState)
   {
-    idleLoopCount++;
+    idleLoopCount++;    // increment idle counter when the cube state is not changing
   }
   else
   {
-    idleLoopCount = 0;
+    idleLoopCount = 0;  // reset counter when the cube state changes
   }
-  // check if the cube has been idle for 1000 cycles
-  if (idleLoopCount == 1000) // 1000 cycles is ~60 seconds
+
+  // Check if the cube has been idle for 1000 cycles
+  if (idleLoopCount == 1000) // 1000 cycles is 1000 * (CYCLE_DELAY_TIME + execution time) = ~60 seconds
   {
     cubeState = 5; // go to sleeping state when idle
   }
 }
 
-// returns true if the cube state has changed
+/// @brief Check if the cube state has changed
+/// @return Returns true if the cube state has changed
 bool cubeStateChanged()
 {
   return lastCubeState != cubeState;
 }
 
+/// @brief Main program loop.
+///        Executes a cyclic check of the cube state and performs the action relevant for that state 
 void loop()
 {
-  delay(50); // cycle time for the loop
+  delay(CYCLE_DELAY_TIME); // cycle time for the loop
   getCubestate();
   switch (cubeState)
   {
