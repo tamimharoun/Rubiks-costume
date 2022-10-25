@@ -30,7 +30,7 @@ const CRGB sColour[7] = {CRGB::White, CRGB::Green, CRGB::Red, CRGB::Blue, CRGB::
 #define NUMSHUFFLES 5                            // Number of shuffles stored in the Shuffle array
 #define NUMCUBESTATES 5                          // Number of cube states, including idle state
 #define CYCLE_DELAY_TIME 50                      // Delay time between each loop in the main program
-#define IDLE_TIME 120000                         // Time after which the cube will go to sleep
+#define IDLE_TIME 180000                         // Time after which the cube will go to sleep
 
 // Global variables
 CRGB SquareColours[NUM_SQUARES] = {CRGB::Black}; // array to hold the colour of each square. initialized to all black.
@@ -41,6 +41,7 @@ unsigned int cubeState = 0;         // cube state
 unsigned int lastCubeState = 0;     // previous cube state
 unsigned long currentMillis = 0;    // current time in ms
 unsigned long buttonPressedMillis = 0;  // button pressed time in ms
+unsigned long buttonReleasedMillis = 0;  // button pressed time in ms
 
 // Mapping between side and square to Led number. 
 // -1 is a special value which means no LEDs there.
@@ -103,9 +104,10 @@ void showRubiksSolved(long delayTime);
 void showRubiksShuffled(int choice, long delayTime);
 void setSquareLeds(int SideNum, int SquareNum, CRGB Colour, int NumLedsPerSquare);
 void getButtonState();
+void getCubeState();
 bool buttonPressed();
 bool buttonReleased();
-void getCubestate();
+bool longButtonPress();
 bool cubeStateChanged();
 
 /// @brief This function is called before the loop to initialize the system
@@ -237,6 +239,7 @@ void getButtonState()
 {
   lastButtonState = buttonState;            // save the state of the button
   buttonState = digitalRead(BUTTON_PIN);    // read the current state of the pushbutton
+  
 }
 
 /// @brief Checks if the button was pressed
@@ -247,8 +250,12 @@ inline bool buttonPressed() { return (buttonState == HIGH && lastButtonState == 
 /// @return returns true if the button was released
 inline bool buttonReleased() { return (buttonState == LOW && lastButtonState == HIGH); }
 
+/// @brief Checks if the button was long-pressed
+/// @return returns true if the button was pressed for longer than 2 seconds
+inline bool longButtonPress() { return (buttonReleased() && (currentMillis - buttonPressedMillis) > 2000); }
+
 /// @brief Saves the last cube state and checks which state the cube should be in now
-void getCubestate()
+void getCubeState()
 {
   lastCubeState = cubeState;  // save the state of the cube
   getButtonState();           // get the button state
@@ -262,6 +269,12 @@ void getCubestate()
       cubeState = SHUFFLED;  // loop back to the first state when the max number of states is reached
     }
     buttonPressedMillis = currentMillis; // save the time the button was pressed
+  }
+
+  // check if this was a long button press, do special action
+  if (longButtonPress())
+  {
+       cubeState = SLEEPING;
   }
 
   // Check if idle time is larger than threshold
@@ -280,7 +293,7 @@ inline bool cubeStateChanged() { return lastCubeState != cubeState; }
 void loop()
 {
   delay(CYCLE_DELAY_TIME); // cycle time for the loop
-  getCubestate();
+  getCubeState();
   switch (cubeState)
   {
   case SLEEPING:
@@ -306,7 +319,7 @@ void loop()
     }
     break;
   default:
-    showProgramRandom(10,200);
+    showProgramRandom(10,500);
     break;
   }
 
