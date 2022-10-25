@@ -1,7 +1,7 @@
 /**
  * @file RubiksLeds.ino
- * @author Tamim Haroun
- * @brief Rubiks cube costume project, 2022
+ * @authors Tamim Haroun, Zaid Haroun
+ * @brief Rubiks cube Haloween costume project, 2022
   */
 
 #include "FastLED.h"    // Helper library for controlling the LEDs
@@ -241,23 +241,13 @@ void getButtonState()
 
 /// @brief Checks if the button was pressed
 /// @return returns true if the button was pressed
-bool buttonPressed()
-{
-  return (buttonState == HIGH && lastButtonState == LOW);
-}
-
-// returns true if the button was pressed
+inline bool buttonPressed() { return (buttonState == HIGH && lastButtonState == LOW); }
 
 /// @brief Checks if the button was released
 /// @return returns true if the button was released
-bool buttonReleased()
-{
-  return (buttonState == LOW && lastButtonState == HIGH);
-}
+inline bool buttonReleased() { return (buttonState == LOW && lastButtonState == HIGH); }
 
 /// @brief Saves the last cube state and checks which state the cube should be in now
-///        0:SLEEP 1: SHUFFLED, 2:SHUFFLING, 3:SOLVED, 4:SHUFFLING
-///
 void getCubestate()
 {
   lastCubeState = cubeState;  // save the state of the cube
@@ -283,10 +273,7 @@ void getCubestate()
 
 /// @brief Check if the cube state has changed
 /// @return Returns true if the cube state has changed
-bool cubeStateChanged()
-{
-  return lastCubeState != cubeState;
-}
+inline bool cubeStateChanged() { return lastCubeState != cubeState; }
 
 /// @brief Main program loop.
 ///        Executes a cyclic check of the cube state and performs the action relevant for that state 
@@ -310,7 +297,7 @@ void loop()
     break;
   case SHUFFLING: // Shuffling and Solving are the same
   case SOLVING:
-    showRubiksShuffled(random8(), 100);
+    showRubiksShuffled(random8(), 100);   // show each random state for 100 ms
     break;
   case SOLVED:
     if (cubeStateChanged())
