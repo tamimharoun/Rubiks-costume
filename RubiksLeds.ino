@@ -13,13 +13,14 @@
 
 #define LED_TYPE WS2812B    // set up the type of LED
 #define COLOR_ORDER GRB     // set up the colour order
-#define BRIGHTNESS 100      // Choose a brightness value between 0 and 255
+#define BRIGHTNESS 110      // Choose a brightness value between 0 and 255
 
 #define NUM_LEDS 135      // 3 LEDS per square. 27 LEDs per side. 5 sides.
 CRGB leds[NUM_LEDS];      // initialize an array of leds
 
 enum Sides    {TOP,  FRONT,  RIGHT,  BACK,  LEFT,  BOTTOM};           // enum of side names. Added for guidance only, to indicate what colour each side is.
 enum sColours {WHITE,  GREEN,  RED,  BLUE,  ORANGE,  YELLOW,  BLACK}; // enum of side colours
+enum cubeStates {SLEEPING, SHUFFLED, SHUFFLING, SOLVED, SOLVING};     // enum of cube states
 
 const CRGB sColour[7] = {CRGB::White, CRGB::Green, CRGB::Red, CRGB::Blue, CRGB::DarkOrange, CRGB::Yellow, CRGB::Black}; // array to store the side colours to be assigned to the leds
 
@@ -29,6 +30,7 @@ const CRGB sColour[7] = {CRGB::White, CRGB::Green, CRGB::Red, CRGB::Blue, CRGB::
 #define NUMSHUFFLES 5                            // Number of shuffles stored in the Shuffle array
 #define NUMCUBESTATES 5                          // Number of cube states, including idle state
 #define CYCLE_DELAY_TIME 50                      // Delay time between each loop in the main program
+#define IDLE_TIME 120000                         // Time after which the cube will go to sleep
 
 // Global variables
 CRGB SquareColours[NUM_SQUARES] = {CRGB::Black}; // array to hold the colour of each square. initialized to all black.
@@ -37,7 +39,8 @@ unsigned int buttonState = 0;       // pushbutton state
 unsigned int lastButtonState = 0;   // previous pushbutton state
 unsigned int cubeState = 0;         // cube state
 unsigned int lastCubeState = 0;     // previous cube state
-unsigned int idleLoopCount = 0;     // idle loop counter
+unsigned long currentMillis = 0;    // current time in ms
+unsigned long buttonPressedMillis = 0;  // button pressed time in ms
 
 // Mapping between side and square to Led number. 
 // -1 is a special value which means no LEDs there.
@@ -111,14 +114,14 @@ void setup()
 
   delay(3000); // initial delay of a few seconds is recommended
 
+  /* Serial output for debugging
   Serial.begin(9600);
-  /*
   while (!Serial)
   {
     ; // wait for serial port to connect. Needed for native USB port only
   }
-  */
   Serial.print("\nStarting up! \n");
+  */
 
   // initialize the pushbutton pin as an input:
   pinMode(BUTTON_PIN, INPUT);
@@ -234,7 +237,6 @@ void getButtonState()
 {
   lastButtonState = buttonState;            // save the state of the button
   buttonState = digitalRead(BUTTON_PIN);    // read the current state of the pushbutton
-  delay(5);   // extra delay, just in case
 }
 
 /// @brief Checks if the button was pressed
@@ -254,36 +256,28 @@ bool buttonReleased()
 }
 
 /// @brief Saves the last cube state and checks which state the cube should be in now
-///        0:SHUFFLED, 1:SHUFFLING, 2:SOLVED, 3:SHUFFLING, 4: N/A , 5: SLEEP
+///        0:SLEEP 1: SHUFFLED, 2:SHUFFLING, 3:SOLVED, 4:SHUFFLING
 ///
 void getCubestate()
 {
   lastCubeState = cubeState;  // save the state of the cube
   getButtonState();           // get the button state
+  currentMillis = millis();          // get the current time
   
   if (buttonPressed())
   {
     cubeState++; // go to the next cube state if the button is pressed
     if (cubeState >= NUMCUBESTATES) 
     {
-      cubeState = 1;  // go back to the first state when the max number of states is reached
+      cubeState = SHUFFLED;  // loop back to the first state when the max number of states is reached
     }
+    buttonPressedMillis = currentMillis; // save the time the button was pressed
   }
 
-  // Keep track of idle time
-  if (cubeState == lastCubeState)
+  // Check if idle time is larger than threshold
+  if (currentMillis - buttonPressedMillis >= IDLE_TIME)
   {
-    idleLoopCount++;    // increment idle counter when the cube state is not changing
-  }
-  else
-  {
-    idleLoopCount = 0;  // reset counter when the cube state changes
-  }
-
-  // Check if the cube has been idle for 1000 cycles
-  if (idleLoopCount == 1000) // 1000 cycles is 1000 * (CYCLE_DELAY_TIME + execution time) = ~60 seconds
-  {
-    cubeState = 0; // go to sleeping state when idle
+    cubeState = SLEEPING; // go to sleeping state
   }
 }
 
@@ -302,39 +296,30 @@ void loop()
   getCubestate();
   switch (cubeState)
   {
-    case 0: // SLEEP
+  case SLEEPING:
     if (cubeStateChanged())
     {
       showProgramCleanUp(50);
-      Serial.print("Shutting off LEDs.\n");
     }
     break;
-  case 1: // SHUFFLED
+  case SHUFFLED:
     if (cubeStateChanged())
     {
-      Serial.print("\nSHUFFLED!\n"); // Go to the shuffled state
       showRubiksShuffled(random8(), 50);
     }
     break;
-  case 2: // SHUFFLING
-  case 4: // SHUFFLING
-    if (cubeStateChanged())
-    {
-      Serial.print("SHUFFLING."); // continue shuffling
-    }
-    Serial.print("."); // continue shuffling
+  case SHUFFLING: // Shuffling and Solving are the same
+  case SOLVING:
     showRubiksShuffled(random8(), 100);
     break;
-  case 3: // SOLVED
+  case SOLVED:
     if (cubeStateChanged())
     {
-      Serial.print("\nSOLVED!\n"); // Go to the solved state
       showRubiksSolved(50);
     }
     break;
   default:
     showProgramRandom(10,200);
-    Serial.print("Oops! Cube state does not exist!");
     break;
   }
 
