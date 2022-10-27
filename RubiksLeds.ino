@@ -106,7 +106,7 @@ void getButtonState();
 void setCubeState();
 bool buttonPressed();
 bool buttonReleased();
-bool longButtonPress();
+bool longButtonPress(int duration);
 bool cubeStateChanged();
 
 /// @brief This function is called before the loop to initialize the system
@@ -265,7 +265,7 @@ inline bool buttonReleased() { return (buttonState == LOW && lastButtonState == 
 
 /// @brief Checks if the button was long-pressed
 /// @return returns true if the button was pressed for longer than 2 seconds
-inline bool longButtonPress() { return ((buttonReleasedMillis - buttonPressedMillis) > 2000); }
+inline bool longButtonPress(int duration) { return ((buttonReleasedMillis - buttonPressedMillis) > duration); }
 
 /// @brief Check if the cube state has changed
 /// @return Returns true if the cube state has changed
@@ -308,8 +308,10 @@ void setCubeState()
     stateChangeTime = millis();
   }
 
-  // check if this was a long button press, do special action
-  if (buttonReleased() && longButtonPress())
+  // Go to sleep if button was pressed for more than 5 seconds
+  if (buttonReleased() && longButtonPress(5000))
+       cubeState = SLEEPING;
+  else if (buttonReleased() && longButtonPress(2000)) // go to code red if button was pressed between 2 and 5 seconds
        cubeState = CODE_RED;
 
   if (buttonIdleTime >= SLEEP_TIME)
