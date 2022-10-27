@@ -19,10 +19,10 @@
 CRGB leds[NUM_LEDS];      // initialize an array of leds
 
 enum Sides    {TOP,  FRONT,  RIGHT,  BACK,  LEFT,  BOTTOM};           // enum of side names. Added for guidance only, to indicate what colour each side is.
-enum sColours {WHITE,  GREEN,  RED,  BLUE,  ORANGE,  YELLOW,  BLACK}; // enum of side colours
 enum cubeStates {SLEEPING, CODE_RED, SOLVING, SOLVED, SHUFFLING, SHUFFLED};     // enum of cube states
 
-const CRGB sColour[7] = {CRGB::White, CRGB::Green, CRGB::Red, CRGB::Blue, CRGB::DarkOrange, CRGB::Yellow, CRGB::Black}; // array to store the side colours to be assigned to the leds
+enum sColours {WHITE,  GREEN,  ORANGE,  BLUE,  RED,  YELLOW,  BLACK}; // enum of side colours
+const CRGB sColour[7] = {CRGB::White, CRGB::Green, CRGB::DarkOrange, CRGB::Blue, CRGB::Red, CRGB::Yellow, CRGB::Black}; // array to store the side colours to be assigned to the leds
 
 #define NUM_SIDES 5                              // number of sides on the cube
 #define SQUARES_PER_SIDE 9                       // number of squares per side
