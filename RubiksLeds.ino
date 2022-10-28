@@ -280,7 +280,7 @@ void setCubeState()
   unsigned long buttonIdleTime = currentMillis - buttonPressedMillis;   // time since button was pressed
   unsigned long stateIdleTime = currentMillis - stateChangeTime;    // time since state was changed
 
-  if (buttonPressed() || stateIdleTime >= 60000)
+  if (buttonPressed() || ((stateIdleTime >= 60000) && (cubeState != SLEEPING)))
   {
     switch (cubeState)
     {
