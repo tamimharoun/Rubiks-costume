@@ -32,3 +32,13 @@ The cube will only transition to the SLEEP state if left Idle for 1000 cycles. (
 - SHUFFLED: A random shuffle is shown. Stays in this state until the button is pressed.
 - SOLVED: A solved cube.
 - SLEEP: Turns off the LEDs if the cube has not changed state for 1 min.
+
+## Development environment
+### IDE
+VSCode on Ubunto was used. Doxygen used for the documentation. 
+Install the Arduino extension: vsciot-vscode.vscode-arduino
+Configure your board and download FastLed library
+
+Note that writing from the serial port is not permitted by default on Ubuntu.
+To enable it, use the below command (assuming ttyACM0 is the serial port you have):
+sudo chmod a+rw /dev/ttyACM0
